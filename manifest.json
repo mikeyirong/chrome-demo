@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+
+  "name": "tvx--网络线路管理",
+  "description": "This extension demonstrates a 'browser action' with kittens.",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon": "superman.jpg",
+    "default_popup": "popup.html"       
+  },
+  "background": { "scripts": ["lib/jquery.min.js","popup.js"] },
+  "permissions":[
+    "tabs", 
+    "http://*/*", "https://*/*",
+    "proxy"
+  ],
+
+  "content_scripts":[{
+    "matches":["https://*/*","http://*/*"],
+    "js":["lib/jquery.min.js","content.js"]
+  }],
+
+
+  "content_security_policy": "script-src 'self' https://webapi.amap.com/ https://js.webapi.amap.com/ https://restapi.amap.com/ 'unsafe-eval'; object-src 'self'"
+}
