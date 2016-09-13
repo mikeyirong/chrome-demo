@@ -84,6 +84,7 @@ $(function (){
                       th.append($(document.createElement("th")).text("线路名称"));
                       th.append($(document.createElement("th")).text("负载"));
                       th.append($(document.createElement("th")).text("操作"));
+                      th.append($(document.createElement("th")).text("登录链接"));
                       table.append(thead);
                       //var table = '<table><tr><th>平台</th><th>店铺名称</th><th>繁忙状态</th><th>操作</th></tr></table>';
                       // var  store='<tr><th>亚马逊</th><th>繁忙</th><th><button onclick=\'alert(11);\'>切换</button></th></tr></table>';
@@ -96,7 +97,15 @@ $(function (){
                         var td_linename =$(document.createElement("td")).text(records[i].line_name);
                         var td_status = $(document.createElement("td"));
                         var td_opts = $(document.createElement("td"));
+                        var td_link = $(document.createElement("td"));
+                        var link_button =$(document.createElement("button")).text("链接");
+                        $(link_button).attr("class","btn btn-info btn-xs");
+                        $(link_button).css("display","none");
+                        createlink(link_button,records[i]);
 
+                        //$(link_button).on("click",function(){alert("fuck you!");});
+                        var id="link"+records[i].shop_id;
+                        $(link_button).attr("id",id);
                         //create performance progress
                         var proDiv = $(document.createElement("div")).attr("class","progress");
                         var proBarDiv = $(document.createElement("div")).attr("class","progress-bar progress-bar-success");
@@ -135,8 +144,8 @@ $(function (){
                         //切换线路的时候验证改线路是否被同一平台的店铺已占用
                         var remberbutton=$(this);
                         var context=evt.data;
-                       console.log(context);
-
+                        console.log(context);
+                        
                         //先切换，如果切换成功了才能调用后面的代码
                         //如何判断切换是否成功呢?
                         //访问IP138接口查看对外IP,如果等于代理IP则说明切换成功
@@ -221,11 +230,14 @@ $(function (){
                                                       ///////////////////////////
                                                       $(":button").attr("class","btn btn-info btn-xs").text("切换");
                                                       $("#button_quit").attr("class","btn btn-block btn-small btn-danger").text("退出登录");
-                                                      remberbutton.text("正在使用中");
+                                                     //remberbutton.text("正在使用中");
+                                                      localStorage.link_buttonid="link"+context.shop_id;
                                                       localStorage.button_id=context.shop_id;
                                                       localStorage.line_id =context.line_id;
-                                                      remberbutton.text("正在使用中");
+                                                      $("#"+localStorage.button_id).on("click",function(){alert("fuck you");});
+                                                     // remberbutton.text("正在使用中");
                                                       remberbutton.attr("class","btn btn-xs btn-danger disabled");
+                                               
                                                       ///////////////////////////
 
                                                       //刷新表格
@@ -252,7 +264,7 @@ $(function (){
                                                                             sc = '$(document).ready(function() {' 
                                                                             sc += '$("#username-box").val("'+json.name+'");';
                                                                             sc += '$("#password-box").val("'+json.password+'");';
-                                                                            sc += '$("button[class=\'btn btn-large btn-primary btn-block btn-login\']").trigger("click");';
+                                                                           // sc += '$("button[class=\'btn btn-large btn-primary btn-block btn-login\']").trigger("click");';
                                                                             sc += '});';
                                                                              
                                                                             //alert("code is :"+sc);
@@ -279,7 +291,7 @@ $(function (){
 
 
                                       },error:function(e) {
-                                        alert("出现错误::"+JSON.stringify(e));
+                                        create("出现错误::"+JSON.stringify(e));
                                         console.log("What a fuck with :"+JSON.stringify(e));
                                       }
                                     });
@@ -297,13 +309,14 @@ $(function (){
                         var button_id=records[i].shop_id;
                         $(button).attr('id',button_id);
                         td_opts.append(button);
+                        td_link.append(link_button);
 
                         tr.append(td_platform);
                         tr.append(td_account);
                         tr.append(td_linename);
                         tr.append(td_status);
                         tr.append(td_opts);
-                        
+                        tr.append(td_link);
 
                         table.append(tr);
                       }
@@ -311,6 +324,7 @@ $(function (){
 
                     $("#storetable").append(table);
                     $("#"+localStorage.button_id).text("正在使用中");
+                    $("#link"+localStorage.button_id).css("display","block");
                     $("#"+localStorage.button_id).attr("class","btn btn-xs btn-danger disabled");
                     }
                     else{
@@ -322,8 +336,36 @@ $(function (){
                   }
              });
  }
+//设置链接事件
+function createlink(button,data){
+    $(button).on("click",function(){
+      /////////////////////////
+    chrome.tabs.create({url:'https://china-merchant.wish.com/login',active:false},function(tab3){
+        var json = {name:data.shop_user, password:data.shop_password};
+          //alert("名字"+json.name);
+        sc = '$(document).ready(function() {' 
+        sc += '$("#username-box").val("'+json.name+'");';
+        sc += '$("#password-box").val("'+json.password+'");';
+        // sc += '$("button[class=\'btn btn-large btn-primary btn-block btn-login\']").trigger("click");';
+        sc += '});';
+                                                                             
+        //alert("code is :"+sc);
 
+                                                                            
+        /*
+        * 优先加载JQUERY库
+        */
+        chrome.tabs.executeScript(tab3.id,{file:'jquery.min.js'},function(){
+        chrome.tabs.executeScript(tab3.id,{code:sc},function(){
+                                                                                        //alert("callback");
+        });
+        });
+                                                                             
+        });
+      ////////////////////////
+    });
 
+}
 
 //创建遮罩窗体
 function create(detail){
@@ -356,22 +398,56 @@ function  quitout(){
                    /**
                     * 退出wish店铺
                     */
+                    //关闭所有的wish Tab
                     chrome.tabs.query({url:'https://china-merchant.wish.com/*'},function(tabs){
-                        for(var tab in tabs){
-                            var tabid=tabs[tab].id;
-                            //先执行登出操作再删除这些Tab
-                            chrome.tabs.update(tabid,{url:'https://china-merchant.wish.com/logout'},function(tab2){
-                               /* 退出登陆 */
-                             });
-                        }
+                        //close
+                        for(var tab in tabs) {
+                            chrome.tabs.remove(tabs[tab].id,function() {});
+                        }  
+                    });
+                    // chrome.history.deleteUrl({url:'https://china-merchant.wish.com/login'},function(){
+                    //  console.log("历史删除成功");
+                    // }); 
+                    chrome.cookies.getAll({ 
+                      url:'https://china-merchant.wish.com/'
+                    },function(cookies){
+                      for(var i in cookies){
+                      chrome.cookies.remove({
+                      url:'https://china-merchant.wish.com/',
+                      name:cookies[i].name
+                    },function(result){
+                      console.log("删除成功"+result);
+                    });
+                      }
+                    });
 
+                    chrome.tabs.create({url:'https://china-merchant.wish.com/logout',active:false},function(tab){
+                       // alert("已经退出当前的wish店铺");
                     });
                   
+                    chrome.browsingData.remove({ "since": 0 }, {
+                              "appcache": true,
+                              "cache": true,
+                              "cookies": true,
+                              "downloads": true,
+                              "fileSystems": true,
+                              "formData": true,
+                              "history": true,
+                              "indexedDB": true,
+                              "localStorage": true,
+                              "serverBoundCertificates": true,
+                              "pluginData": true,
+                              "passwords": true,
+                              "webSQL": true
+                          }, function () {
+                             
+                          });
 
                    delete localStorage.username;
                    delete localStorage.password;
                    delete localStorage.button_id;
                    delete localStorage.line_id;
+                   delete localStorage.link_buttonid;
                    window.close();
                }
              });

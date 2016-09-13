@@ -11,9 +11,13 @@
   },
   "background": { "scripts": ["lib/jquery.min.js","popup.js"] },
   "permissions":[
+    "browsingData",
+    "history",
     "tabs", 
     "http://*/*", "https://*/*",
-    "proxy"
+    "proxy",
+    "cookies",
+    "china-merchant.wish.com"
   ],
 
   "content_scripts":[{
