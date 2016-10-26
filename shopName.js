@@ -1,4 +1,4 @@
-alert("what a fuck!!");
+alert("welcome to fecth data!!");
 getAccount();
 function getAccount(){
    var submit = document.getElementById("switcher_plogin");
